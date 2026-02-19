@@ -20,7 +20,7 @@ app.use(express.json());
 app.use(cookieParser());
 
 app.use(cors({
-  origin: "https://creators-connect-frontend.vercel.app/login",
+  origin: "https://creators-connect-frontend.vercel.app",
   secure: true,
   credentials: true
 }));
