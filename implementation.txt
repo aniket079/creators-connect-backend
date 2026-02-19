@@ -1,0 +1,70 @@
+mkdir creatorconnect-backend
+cd creatorconnect-backend
+npm init -y
+
+npm install express mongoose dotenv bcryptjs jsonwebtoken cookie-parser cors
+
+
+creatorconnect-backend
+│
+├── src
+│   ├── config
+│   │    └── db.js
+│   ├── controllers
+│   │    └── authController.js
+│   ├── middleware
+│   │    └── authMiddleware.js
+│   ├── models
+│   │    └── User.js
+│   ├── routes
+│   │    └── authRoutes.js
+│   ├── utils
+│   │    └── generateToken.js
+│   └── server.js
+│
+└── .env
+
+
+ Step 1 – Enable 2-Step Verification
+
+Go to:
+ https://myaccount.google.com/security
+
+Turn ON:
+
+2-Step Verification
+
+
+Without this, App Password option will NOT appear.
+
+ Step 2 – Generate App Password
+
+After enabling 2FA:
+
+Go to:
+ https://myaccount.google.com/apppasswords
+
+Select:
+
+App → Mail
+
+Device → Other (Custom)
+
+Give name:
+
+CreatorConnect
+
+
+Click Generate
+
+You will get something like:
+
+abcd efgh ijkl mnop
+
+
+Remove spaces:
+
+abcdefghijklmnop
+
+
+That is your email passkey.
