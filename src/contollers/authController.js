@@ -10,7 +10,7 @@ export const signup = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "lax"
+      sameSite: "None"
     });
 
     res.status(201).json({
@@ -30,7 +30,7 @@ export const login = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "lax"
+      sameSite: "None"
     });
 
     res.json({
@@ -89,7 +89,7 @@ export const verifyOtpController = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "lax"
+      sameSite: "None"
     });
 
     res.status(201).json(user);
