@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 
 const createEmailError = (message) => {
   const error = new Error(message);
@@ -8,30 +8,30 @@ const createEmailError = (message) => {
 };
 
 export const sendEmail = async (to, subject, text) => {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+  if (!process.env.RESEND_API_KEY) {
     throw createEmailError("Email service is not configured");
   }
 
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    }
-  });
+  const from = process.env.RESEND_FROM_EMAIL || "CreatorConnect <onboarding@resend.dev>";
+  const resend = new Resend(process.env.RESEND_API_KEY);
 
   try {
-    await transporter.sendMail({
-      from: `"CreatorConnect" <${process.env.EMAIL_USER}>`,
+    const { error } = await resend.emails.send({
+      from,
       to,
       subject,
       text
     });
+
+    if (error) {
+      console.error("Email send failed:", error.message);
+      throw createEmailError("Failed to send OTP email");
+    }
   } catch (error) {
     console.error("Email send failed:", error.message);
+    if (error.code === "EMAIL_SERVICE_ERROR") {
+      throw error;
+    }
     throw createEmailError("Failed to send OTP email");
   }
 };
