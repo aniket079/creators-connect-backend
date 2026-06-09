@@ -21,6 +21,7 @@ await connectRedis();
 
 const app = express();
 const server = http.createServer(app);
+const port = process.env.PORT || 5000;
 
 app.use("/api/webhook", webhookRoutes);
 app.use(express.json());
@@ -30,6 +31,10 @@ app.use(cors({
    origin: true,
   credentials: true
 }));
+
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/assets", assetRoutes);
@@ -41,6 +46,6 @@ app.use("/api/artists", artistRoutes);
 app.use("/api/purchases", purchaseRoutes);
 initializeSocket(server);
 
-server.listen(process.env.PORT, () => {
-  console.log("Server running on port", process.env.PORT);
+server.listen(port, () => {
+  console.log("Server running on port", port);
 });
