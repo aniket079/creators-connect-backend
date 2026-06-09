@@ -13,15 +13,20 @@ const toRoomId = (value) => value.toString();
 const normalizeText = (value) => (typeof value === "string" ? value.trim() : "");
 const normalizePayload = (value) =>
   value && typeof value === "object" && !Array.isArray(value) ? value : {};
+const allowedOrigins = (process.env.SOCKET_CORS_ORIGINS || process.env.CLIENT_URL || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 const initializeSocket = (server) => {
 
   const io = new Server(server, {
     cors: {
-          origin: [
-      "http://localhost:5173",
-      "http://localhost:5174"
-    ],
+      origin: [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        ...allowedOrigins
+      ],
       credentials: true
     }
   });
