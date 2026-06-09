@@ -6,7 +6,7 @@ import {
   markConversationMessagesRead
 } from "../services/chatService.js";
 import { createAdapter } from "@socket.io/redis-adapter";
-import { pubClient, subClient } from "../config/redis.js";
+import { isRedisConnected, pubClient, subClient } from "../config/redis.js";
 
 const isValidId = (value) => value !== undefined && value !== null && value !== "";
 const toRoomId = (value) => value.toString();
@@ -26,7 +26,11 @@ const initializeSocket = (server) => {
     }
   });
 
-  io.adapter(createAdapter(pubClient, subClient));
+  if (isRedisConnected()) {
+    io.adapter(createAdapter(pubClient, subClient));
+  } else {
+    console.warn("Socket.IO Redis adapter disabled");
+  }
 
   io.on("connection", (socket) => {
 
