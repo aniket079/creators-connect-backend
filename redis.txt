@@ -1,0 +1,90 @@
+docker --version
+docker run -d -p 6379:6379 --name redis redis
+docker ps
+
+
+Redis (Remote Dictionary Server)
+
+Redis is:
+
+An in-memory data structure store
+
+A key-value database
+
+Extremely fast
+Used as cache, database, message broker, and queue
+Unlike MongoDB or MySQL, Redis stores data in RAM, not on disk (though it can persist to disk).
+
+
+
+Why Is Redis So Fast?
+
+Because:
+
+Data is stored in memory (RAM)
+
+No heavy disk I/O
+Single-threaded event loop (like Node.js)
+O(1) average time complexity for most operations
+You can tell students:
+“If MongoDB is a library on disk, Redis is a notebook on your table.”
+
+How Redis Works Internally
+In-Memory Storage
+Redis stores data in:
+
+Key → Value
+
+Example:
+SET user:101 "Aniket"
+GET user:101
+But values aren’t just strings
+
+
+| Type       | Use Case                   |
+| ---------- | -------------------------- |
+| String     | Caching, tokens            |
+| List       | Queues                     |
+| Set        | Unique values              |
+| Sorted Set | Leaderboards               |
+| Hash       | Objects (like JSON fields) |
+| Stream     | Event streaming            |
+
+
+Where Redis Is Used in Real Projects
+
+Now this is where it becomes practical.
+Caching (Most Common Use Case)
+Without Redis:
+
+Client → Backend → MongoDB → Response
+(Every request hits database )
+
+With Redis:
+
+Client → Backend → Redis → Response
+(Database only if cache miss )
+
+const cachedUser = await redis.get("user:101");
+if (cachedUser) {
+  return JSON.parse(cachedUser);
+}
+const user = await User.findById(101);
+await redis.set("user:101", JSON.stringify(user), "EX", 60);
+
+Cache Hit
+Cache Miss
+TTL (Time To Live)
+
+Does Redis Store Data Permanently?
+By default → Memory only
+But it supports:
+
+RDB (Snapshotting)
+Saves memory snapshot to disk
+
+AOF (Append Only File)
+
+Logs every write operation
+So Redis can survive crashes.
+

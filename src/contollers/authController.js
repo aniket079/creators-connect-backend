@@ -4,13 +4,14 @@ import { saveOtp } from "../services/otpServices.js";
 import { sendEmail } from "../sendEmail.js";
 import { verifyOtpService } from "../services/otpServices.js";
 import { generateOtp } from "../services/otpServices.js";
+import { pubClient } from "../config/redis.js";
 export const signup = async (req, res) => {
   try {
     const { user, token } = await registerUser(req.body);
 
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "None"
+      sameSite: "lax"
     });
 
     res.status(201).json({
@@ -26,17 +27,38 @@ export const signup = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
-    const { user, token } = await loginUser(req.body);
+    console.log("login request recieved",req.body);
 
+    const ip = req.ip;
+    // console.log("ïp address",ip);
+    const key = `login_attempts:${ip}`;
+    // console.log("key",key);
+    // console.log("public client",pubClient)
+    // console.log("redis status", pubClient.isOpen);
+    const attempts = await pubClient.incr(key);
+
+    // if (attempts === 1) {
+    // await pubClient.expire(key, 300);
+    // console.log("Getting attempts issue") // 1 minute window
+    // }
+  //   if (attempts > 5) {
+  //     console.log("to many attempts")
+  //   return res.status(429).json({
+  //           message: "Too many login attempts. Try again later."
+  //   });
+  //  }
+    const { user, token } = await loginUser(req.body);
+    //  console.log("user and token",user,token)
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "None"
+      sameSite: "lax"
     });
 
     res.json({
       id: user._id,
       name: user.name,
-      email: user.email
+      email: user.email,
+      token: user.tokens
     });
 
   } catch (error) {
@@ -89,7 +111,7 @@ export const verifyOtpController = async (req, res) => {
 
     res.cookie("token", token, {
       httpOnly: true,
-      sameSite: "None"
+      sameSite: "lax"
     });
 
     res.status(201).json(user);
