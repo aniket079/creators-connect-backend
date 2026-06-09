@@ -5,14 +5,22 @@ import { sendEmail } from "../sendEmail.js";
 import { verifyOtpService } from "../services/otpServices.js";
 import { generateOtp } from "../services/otpServices.js";
 import { pubClient } from "../config/redis.js";
+
+const isProduction = process.env.NODE_ENV === "production";
+
+const getAuthCookieOptions = () => ({
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? "none" : "lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  ...(process.env.COOKIE_DOMAIN ? { domain: process.env.COOKIE_DOMAIN } : {})
+});
+
 export const signup = async (req, res) => {
   try {
     const { user, token } = await registerUser(req.body);
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      sameSite: "lax"
-    });
+    res.cookie("token", token, getAuthCookieOptions());
 
     res.status(201).json({
       id: user._id,
@@ -35,7 +43,12 @@ export const login = async (req, res) => {
     // console.log("key",key);
     // console.log("public client",pubClient)
     // console.log("redis status", pubClient.isOpen);
-    const attempts = await pubClient.incr(key);
+    if (pubClient.isOpen) {
+      const attempts = await pubClient.incr(key);
+      if (attempts === 1) {
+        await pubClient.expire(key, 300);
+      }
+    }
 
     // if (attempts === 1) {
     // await pubClient.expire(key, 300);
@@ -49,10 +62,7 @@ export const login = async (req, res) => {
   //  }
     const { user, token } = await loginUser(req.body);
     //  console.log("user and token",user,token)
-    res.cookie("token", token, {
-      httpOnly: true,
-      sameSite: "lax"
-    });
+    res.cookie("token", token, getAuthCookieOptions());
 
     res.json({
       id: user._id,
@@ -68,7 +78,8 @@ export const login = async (req, res) => {
 
 export const logout = (req, res) => {
   res.cookie("token", "", {
-    httpOnly: true,
+    ...getAuthCookieOptions(),
+    maxAge: 0,
     expires: new Date(0)
   });
 
@@ -109,10 +120,7 @@ export const verifyOtpController = async (req, res) => {
       password
     });
 
-    res.cookie("token", token, {
-      httpOnly: true,
-      sameSite: "lax"
-    });
+    res.cookie("token", token, getAuthCookieOptions());
 
     res.status(201).json(user);
 
