@@ -1,8 +1,15 @@
 import nodemailer from "nodemailer";
 
+const createEmailError = (message) => {
+  const error = new Error(message);
+  error.code = "EMAIL_SERVICE_ERROR";
+  error.statusCode = 503;
+  return error;
+};
+
 export const sendEmail = async (to, subject, text) => {
   if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    throw new Error("Email service is not configured");
+    throw createEmailError("Email service is not configured");
   }
 
   const transporter = nodemailer.createTransport({
@@ -16,12 +23,15 @@ export const sendEmail = async (to, subject, text) => {
     }
   });
 
-  await transporter.sendMail({
-    from: `"CreatorConnect" <${process.env.EMAIL_USER}>`,
-    to: to,          // 👈 Receiver email
-    subject: subject,
-    text: text
-  });
+  try {
+    await transporter.sendMail({
+      from: `"CreatorConnect" <${process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      text
+    });
+  } catch (error) {
+    console.error("Email send failed:", error.message);
+    throw createEmailError("Failed to send OTP email");
+  }
 };
-
-// sendEmail("aniket@gmail.com","testingmail","asdfgkl");

@@ -92,7 +92,8 @@ export const sendOtpController = async (req, res) => {
     res.json({ message: "OTP sent successfully" });
 
   } catch (error) {
-    const statusCode = error.message === "Email service is not configured" ? 503 : 400;
+    console.error("Send OTP failed:", error.message);
+    const statusCode = error.statusCode || 400;
     res.status(statusCode).json({ message: error.message });
   }
 };
