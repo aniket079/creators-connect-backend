@@ -14,6 +14,7 @@ import webhookRoutes from "./routes/webhookRoute.js"
 import userRoutes from "./routes/userRoutes.js";
 import artistRoutes from "./routes/artistRoutes.js";
 import purchaseRoutes from "./routes/purchaseRoutes.js";
+import recommendationRoutes from "./routes/recommendationRoutes.js";
 import { connectRedis } from "./config/redis.js";
 
 connectDB();
@@ -44,6 +45,7 @@ app.use("/api/payment", paymentRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/artists", artistRoutes);
 app.use("/api/purchases", purchaseRoutes);
+app.use("/api/recommendations", recommendationRoutes);
 initializeSocket(server);
 
 server.listen(port, () => {

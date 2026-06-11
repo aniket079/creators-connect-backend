@@ -5,6 +5,7 @@ import Asset from "./models/Asset.js";
 import Order from "./models/Order.js";
 import Plan from "./models/Plan.js";
 import User from "./models/User.js";
+import UserActivity from "./models/UserActivity.js";
 
 const testPassword = process.env.SEED_USER_PASSWORD || "Test@12345";
 
@@ -303,6 +304,99 @@ const assets = [
   }
 ];
 
+const activities = [
+  {
+    userEmail: "aarav.creator@test.com",
+    type: "view",
+    targetType: "asset",
+    targetTitle: "Food Campaign Shot"
+  },
+  {
+    userEmail: "aarav.creator@test.com",
+    type: "save",
+    targetType: "asset",
+    targetTitle: "Travel Story Cover"
+  },
+  {
+    userEmail: "aarav.creator@test.com",
+    type: "like",
+    targetType: "asset",
+    targetTitle: "Lifestyle Campaign Tile"
+  },
+  {
+    userEmail: "aarav.creator@test.com",
+    type: "purchase",
+    targetType: "asset",
+    targetTitle: "Ambient Launch Beat"
+  },
+  {
+    userEmail: "aarav.creator@test.com",
+    type: "message",
+    targetType: "creator",
+    targetEmail: "isha.photographer@test.com"
+  },
+  {
+    userEmail: "maya.designer@test.com",
+    type: "view",
+    targetType: "asset",
+    targetTitle: "Editorial Portrait Pack"
+  },
+  {
+    userEmail: "maya.designer@test.com",
+    type: "like",
+    targetType: "asset",
+    targetTitle: "Creator Bio Header"
+  },
+  {
+    userEmail: "maya.designer@test.com",
+    type: "save",
+    targetType: "asset",
+    targetTitle: "Food Campaign Shot"
+  },
+  {
+    userEmail: "maya.designer@test.com",
+    type: "message",
+    targetType: "creator",
+    targetEmail: "aarav.creator@test.com"
+  },
+  {
+    userEmail: "rohan.studio@test.com",
+    type: "view",
+    targetType: "asset",
+    targetTitle: "Brand Moodboard"
+  },
+  {
+    userEmail: "rohan.studio@test.com",
+    type: "like",
+    targetType: "asset",
+    targetTitle: "Hand Painted Wall Panel"
+  },
+  {
+    userEmail: "rohan.studio@test.com",
+    type: "message",
+    targetType: "creator",
+    targetEmail: "maya.designer@test.com"
+  },
+  {
+    userEmail: "isha.photographer@test.com",
+    type: "view",
+    targetType: "asset",
+    targetTitle: "Product Flatlay Concept"
+  },
+  {
+    userEmail: "isha.photographer@test.com",
+    type: "save",
+    targetType: "asset",
+    targetTitle: "Studio Motion Loop"
+  },
+  {
+    userEmail: "isha.photographer@test.com",
+    type: "message",
+    targetType: "creator",
+    targetEmail: "rohan.studio@test.com"
+  }
+];
+
 const getGallery = (title) => [
   {
     url: `https://picsum.photos/seed/${encodeURIComponent(`${title}-gallery-1`)}/1200/800`,
@@ -439,6 +533,71 @@ const seedOrders = async (seededUsers, seededAssets) => {
   });
 };
 
+const seedActivities = async (seededUsers, seededAssets) => {
+  const userByEmail = seededUsers.reduce((map, user) => {
+    map[user.email] = user;
+    return map;
+  }, {});
+  const assetByTitle = seededAssets.reduce((map, asset) => {
+    map[asset.title] = asset;
+    return map;
+  }, {});
+  const userById = seededUsers.reduce((map, user) => {
+    map[user._id.toString()] = user;
+    return map;
+  }, {});
+
+  await UserActivity.deleteMany({
+    user: { $in: seededUsers.map((user) => user._id) }
+  });
+
+  const docs = activities.map((activity) => {
+    const user = userByEmail[activity.userEmail];
+
+    if (!user) {
+      throw new Error(`Seed activity user not found: ${activity.userEmail}`);
+    }
+
+    if (activity.targetType === "asset") {
+      const asset = assetByTitle[activity.targetTitle];
+
+      if (!asset) {
+        throw new Error(`Seed activity asset not found: ${activity.targetTitle}`);
+      }
+
+      const owner = userById[asset.owner.toString()];
+
+      return {
+        user: user._id,
+        type: activity.type,
+        targetType: activity.targetType,
+        targetId: asset._id,
+        category: asset.category,
+        profession: owner?.profession || owner?.category || owner?.title,
+        location: owner?.location
+      };
+    }
+
+    const creator = userByEmail[activity.targetEmail];
+
+    if (!creator) {
+      throw new Error(`Seed activity creator not found: ${activity.targetEmail}`);
+    }
+
+    return {
+      user: user._id,
+      type: activity.type,
+      targetType: activity.targetType,
+      targetId: creator._id,
+      category: creator.category,
+      profession: creator.profession || creator.category || creator.title,
+      location: creator.location
+    };
+  });
+
+  return UserActivity.insertMany(docs);
+};
+
 const seed = async () => {
   await connectDB();
 
@@ -447,11 +606,13 @@ const seed = async () => {
   const seededUsers = await seedUsers(passwordHash);
   const seededAssets = await seedAssets(seededUsers);
   await seedOrders(seededUsers, seededAssets);
+  const seededActivities = await seedActivities(seededUsers, seededAssets);
 
   console.log("Database seeded successfully.");
   console.log(`Plans: ${seededPlans.length}`);
   console.log(`Users: ${seededUsers.length}`);
   console.log(`Assets: ${seededAssets.length}`);
+  console.log(`Activities: ${seededActivities.length}`);
   console.table(
     seededUsers.map((user) => ({
       email: user.email,
